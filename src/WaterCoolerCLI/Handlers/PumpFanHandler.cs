@@ -1,6 +1,8 @@
 using WaterCoolerCLI.Api;
 using WaterCoolerCLI.Models;
 
+namespace WaterCoolerCLI.Handlers;
+
 public static class PumpFanHandler
 {
     // Constants for strings
@@ -14,7 +16,7 @@ public static class PumpFanHandler
     private const string ModeSetFormat = "{0} mode set to {1}.";
     private const string FailedSetModeFormat = "Failed to set {0} mode.";
     private const string CurveHeaderFormat = "{0} Curve:";
-    private const string TempSpeedFormat = "{0} °C: {1} RPM";
+    private const string TempSpeedFormat = "{0} ï¿½C: {1} RPM";
     private const string FailedGetCurveFormat = "Failed to get {0} curve.";
     private const string InvalidPointsMessage = "Invalid points. Need exactly 4 temp:speed pairs (e.g., 0:1000,30:1500,50:2000,65:2500).";
     private const string FailedSetModeToCustomizedFormat = "Failed to set {0} mode to customized.";
@@ -24,7 +26,6 @@ public static class PumpFanHandler
 
     // Constants for numbers
     private const int NumPoints = 4;
-    private const int DefaultSpeed = 0;
 
     /// <summary>
     /// Gets the current fan mode.
@@ -63,12 +64,10 @@ public static class PumpFanHandler
     /// </summary>
     public static void GetSpeeds(DeviceInfo device)
     {
-        int fanSpeed = DefaultSpeed;
-        int pumpSpeed = DefaultSpeed;
-        if (DeviceApi.GetRPMSpeed(device.HidDriver, ref fanSpeed, ref pumpSpeed))
+        if (DeviceApi.GetRPMSpeed(device.HidDriver, out var fanSpeed, out var pumpSpeed))
         {
-            Console.WriteLine(string.Format(FanSpeedFormat, fanSpeed));
-            Console.Write(string.Format(PumpSpeedFormat, pumpSpeed));
+            Console.WriteLine(FanSpeedFormat, fanSpeed);
+            Console.Write(PumpSpeedFormat, pumpSpeed);
         }
         else
         {
@@ -114,12 +113,10 @@ public static class PumpFanHandler
     public static void PrintSpeedMetrics(DeviceInfo device)
     {
         // Fan and Pump Speeds
-        int fanSpeed = DefaultSpeed;
-        int pumpSpeed = DefaultSpeed;
-        if (DeviceApi.GetRPMSpeed(device.HidDriver, ref fanSpeed, ref pumpSpeed))
+        if (DeviceApi.GetRPMSpeed(device.HidDriver, out var fanSpeed, out var pumpSpeed))
         {
-            Console.Write(string.Format(FanSpeedFormat, fanSpeed));
-            Console.Write(string.Format(PumpSpeedFormat, pumpSpeed));
+            Console.Write(FanSpeedFormat, fanSpeed);
+            Console.Write(PumpSpeedFormat, pumpSpeed);
         }
         else
         {
@@ -129,22 +126,20 @@ public static class PumpFanHandler
 
     private static void GetMode(DeviceInfo device, SpeedType speedType)
     {
-        SpeedMode fanMode = SpeedMode.Balanced;
-        SpeedMode pumpMode = SpeedMode.Balanced;
-        if (DeviceApi.GetMode(device.HidDriver, ref fanMode, ref pumpMode))
+        if (DeviceApi.GetMode(device.HidDriver, out var fanMode, out var pumpMode))
         {
             SpeedMode mode = speedType == SpeedType.Fan ? fanMode : pumpMode;
-            Console.WriteLine(string.Format(ModeFormat, speedType, mode));
+            Console.WriteLine(ModeFormat, speedType, mode);
         }
         else
         {
-            Console.WriteLine(string.Format(FailedGetModeFormat, speedType.ToString().ToLower()));
+            Console.WriteLine(FailedGetModeFormat, speedType.ToString().ToLower());
         }
     }
 
     private static void SetMode(DeviceInfo device, SpeedType speedType, string modeStr)
     {
-        if (!Enum.TryParse<SpeedMode>(modeStr, true, out SpeedMode mode))
+        if (!Enum.TryParse(modeStr, true, out SpeedMode mode))
         {
             Console.WriteLine(InvalidModeMessage);
             return;
@@ -153,34 +148,31 @@ public static class PumpFanHandler
         if (DeviceApi.SetSpeedMode(device.HidDriver, speedType, mode))
         {
             DeviceApi.Save(device.HidDriver);
-            Console.WriteLine(string.Format(ModeSetFormat, speedType, mode));
+            Console.WriteLine(ModeSetFormat, speedType, mode);
         }
         else
         {
-            Console.WriteLine(string.Format(FailedSetModeFormat, speedType.ToString().ToLower()));
+            Console.WriteLine(FailedSetModeFormat, speedType.ToString().ToLower());
         }
     }
 
     private static void GetCurve(DeviceInfo device, SpeedType speedType)
     {
-        SpeedMode fanMode = SpeedMode.Balanced;
-        SpeedMode pumpMode = SpeedMode.Balanced;
-        if (!DeviceApi.GetMode(device.HidDriver, ref fanMode, ref pumpMode))
+        if (!DeviceApi.GetMode(device.HidDriver, out var fanMode, out var pumpMode))
         {
             Console.WriteLine(FailedGetModes);
             return;
         }
         SpeedMode mode = speedType == SpeedType.Fan ? fanMode : pumpMode;
-        SpeedCurve speedCurve = new SpeedCurve(speedType);
-        if (!DeviceApi.GetSpeedCurve(device, mode, ref speedCurve))
+        if (!DeviceApi.GetSpeedCurve(device, speedType, mode, out var speedCurve))
         {
-            Console.WriteLine(string.Format(FailedGetCurveFormat, speedType.ToString().ToLower()));
+            Console.WriteLine(FailedGetCurveFormat, speedType.ToString().ToLower());
             return;
         }
-        Console.WriteLine(string.Format(CurveHeaderFormat, speedType));
+        Console.WriteLine(CurveHeaderFormat, speedType);
         foreach (var ts in speedCurve.TemperatureSpeeds)
         {
-            Console.WriteLine(string.Format(TempSpeedFormat, ts.Temperature, ts.Speed));
+            Console.WriteLine(TempSpeedFormat, ts.Temperature, ts.Speed);
         }
     }
 
@@ -201,16 +193,16 @@ public static class PumpFanHandler
         // Set mode to customized
         if (!DeviceApi.SetSpeedMode(device.HidDriver, speedType, SpeedMode.Customized))
         {
-            Console.WriteLine(string.Format(FailedSetModeToCustomizedFormat, speedType.ToString().ToLower()));
+            Console.WriteLine(FailedSetModeToCustomizedFormat, speedType.ToString().ToLower());
             return;
         }
         if (!DeviceApi.SetSpeedCurve(device.HidDriver, speedCurve))
         {
-            Console.WriteLine(string.Format(FailedSetCurveFormat, speedType.ToString().ToLower()));
+            Console.WriteLine(FailedSetCurveFormat, speedType.ToString().ToLower());
             return;
         }
         DeviceApi.Save(device.HidDriver);
-        Console.WriteLine(string.Format(CurveSetAndSavedFormat, speedType));
+        Console.WriteLine(CurveSetAndSavedFormat, speedType);
     }
 
     private static (int, int)[] ParsePoints(string str)
@@ -240,23 +232,17 @@ public static class PumpFanHandler
 
     private static List<(int temp, int speed)> GetCurvePoints(DeviceInfo device, SpeedType speedType)
     {
-        SpeedMode fanMode = SpeedMode.Balanced;
-        SpeedMode pumpMode = SpeedMode.Balanced;
-        if (!DeviceApi.GetMode(device.HidDriver, ref fanMode, ref pumpMode))
+        if (!DeviceApi.GetMode(device.HidDriver, out var fanMode, out var pumpMode))
         {
-            return new List<(int, int)>();
+            return [];
         }
         SpeedMode mode = speedType == SpeedType.Fan ? fanMode : pumpMode;
-        SpeedCurve speedCurve = new SpeedCurve(speedType);
-        if (!DeviceApi.GetSpeedCurve(device, mode, ref speedCurve))
+
+        if (!DeviceApi.GetSpeedCurve(device, speedType, mode, out var speedCurve))
         {
-            return new List<(int, int)>();
+            return [];
         }
-        var points = new List<(int temp, int speed)>();
-        foreach (var ts in speedCurve.TemperatureSpeeds)
-        {
-            points.Add((ts.Temperature, ts.Speed));
-        }
-        return points;
+
+        return [.. speedCurve.TemperatureSpeeds.Select(ts => (ts.Temperature, ts.Speed))];
     }
 }

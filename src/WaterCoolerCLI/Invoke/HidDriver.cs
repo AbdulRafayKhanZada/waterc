@@ -46,7 +46,7 @@ namespace WaterCoolerCLI.Invoke
             }
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format(WriteByteExceptionMessage, ex.Message));
+                Console.WriteLine(WriteByteExceptionMessage, ex.Message);
                 return -1;
             }
         }
@@ -77,7 +77,7 @@ namespace WaterCoolerCLI.Invoke
             }
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format(ReadByteExceptionMessage, ex.Message));
+                Console.WriteLine(ReadByteExceptionMessage, ex.Message);
                 return -1;
             }
         }

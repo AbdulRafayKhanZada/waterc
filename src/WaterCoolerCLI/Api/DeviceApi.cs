@@ -18,17 +18,17 @@ namespace WaterCoolerCLI.Api
         private const byte GetFanQtyCommandCode = 199;
         private const byte SaveCommandCode = 182;
 
-        private readonly static byte[] GetDeviceModelCommand = [CommandPrefix, GetDeviceModelCommandCode, 0, 0, 0, 0, 0, 0, 0];
-        private readonly static byte[] GetModeCommand = [CommandPrefix, GetModeCommandCode, 0, 0, 0, 0, 0, 0, 0];
-        private readonly static byte[] GetRPMCommand = [CommandPrefix, GetRPMCommandCode, 0, 0, 0, 0, 0, 0, 0];
-        private readonly static byte[] GetCustomCurveCommand = [CommandPrefix, GetCustomCurveCommandCode, 0, 0, 0, 0, 0, 0, 0];
-        private readonly static byte[] SetModeCommand = [CommandPrefix, SetModeCommandCode, 0, 0, 0];
-        private readonly static byte[] SetCurveCommand = [CommandPrefix, SetCurveCommandCode, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        private readonly static byte[] SetFanQtyCommand = [CommandPrefix, SetFanQtyCommandCode, 0];
-        private readonly static byte[] GetFanQtyCommand = [CommandPrefix, GetFanQtyCommandCode, 0, 0, 0, 0, 0, 0];
-        private readonly static byte[] SaveCommand = [CommandPrefix, SaveCommandCode, 0, 0, 0, 0, 0, 0, 0];
+        private static readonly byte[] GetDeviceModelCommand = [CommandPrefix, GetDeviceModelCommandCode, 0, 0, 0, 0, 0, 0, 0];
+        private static readonly byte[] GetModeCommand = [CommandPrefix, GetModeCommandCode, 0, 0, 0, 0, 0, 0, 0];
+        private static readonly byte[] GetRPMCommand = [CommandPrefix, GetRPMCommandCode, 0, 0, 0, 0, 0, 0, 0];
+        private static readonly byte[] GetCustomCurveCommand = [CommandPrefix, GetCustomCurveCommandCode, 0, 0, 0, 0, 0, 0, 0];
+        private static readonly byte[] SetModeCommand = [CommandPrefix, SetModeCommandCode, 0, 0, 0];
+        private static readonly byte[] SetCurveCommand = [CommandPrefix, SetCurveCommandCode, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        private static readonly byte[] SetFanQtyCommand = [CommandPrefix, SetFanQtyCommandCode, 0];
+        private static readonly byte[] GetFanQtyCommand = [CommandPrefix, GetFanQtyCommandCode, 0, 0, 0, 0, 0, 0];
+        private static readonly byte[] SaveCommand = [CommandPrefix, SaveCommandCode, 0, 0, 0, 0, 0, 0, 0];
 
-        private readonly static byte[] Buffer = new byte[256];
+        private static readonly byte[] Buffer = new byte[256];
 
         // Constants for model names
         private const string ModelX240 = "GP-AORUS WATERFORCE X 240";
@@ -101,9 +101,10 @@ namespace WaterCoolerCLI.Api
         /// <summary>
         /// Retrieves the device model name based on the device PID and device info.
         /// </summary>
-        public static bool GetDeviceModelName(DevicePId devicePId, HidDriver hidDriver, ref string sModelName)
+        public static bool GetDeviceModelName(DevicePId devicePId, HidDriver hidDriver, out string sModelName)
         {
             ClearBuffer();
+            sModelName = string.Empty;
 
             bool result = CoolerApi.Receive(hidDriver, GetDeviceModelCommand, Buffer);
             switch (devicePId)
@@ -143,11 +144,11 @@ namespace WaterCoolerCLI.Api
         /// <summary>
         /// Gets the fan speed limits for the specified PID.
         /// </summary>
-        public static void GetFanSpeedLimit(int nPID, out int nFanMinSpeed, out int nFanMaxSpeed)
+        public static void GetFanSpeedLimit(int pid, out int nFanMinSpeed, out int nFanMaxSpeed)
         {
             nFanMinSpeed = DefaultFanMinSpeed;
             nFanMaxSpeed = DefaultFanMaxSpeed;
-            switch (nPID)
+            switch (pid)
             {
                 case PidXII240_360_360I:
                     nFanMinSpeed = FanMinSpeedX280;
@@ -197,13 +198,13 @@ namespace WaterCoolerCLI.Api
         /// <summary>
         /// Gets the fan quantity.
         /// </summary>
-        public static bool GetFanQty(HidDriver hidDriver, ref int nFanQty)
+        public static bool GetFanQty(HidDriver hidDriver, out int nFanQty)
         {
+            nFanQty = 0;
+
             try
             {
                 ClearBuffer();
-
-                byte[] szCommand = GetFanQtyCommand;
 
                 if (!CoolerApi.Receive(hidDriver, GetFanQtyCommand, Buffer))
                 {
@@ -227,8 +228,10 @@ namespace WaterCoolerCLI.Api
         /// <summary>
         /// Retrieves the current fan and pump modes.
         /// </summary>
-        public static bool GetMode(HidDriver hidDriver, ref SpeedMode fanMode, ref SpeedMode pumMode)
+        public static bool GetMode(HidDriver hidDriver, out SpeedMode fanMode, out SpeedMode pumMode)
         {
+            fanMode = SpeedMode.Balanced;
+            pumMode = SpeedMode.Balanced;
             try
             {
                 ClearBuffer();
@@ -236,7 +239,7 @@ namespace WaterCoolerCLI.Api
                 bool flag = CoolerApi.Receive(hidDriver, GetModeCommand, Buffer);
                 if (!flag)
                 {
-                    LogUtil.Error(LogPrefix, GetFanPumpModeFailMessage);
+                    LogUtil.Error(LogPrefix, GetFanPumpModeFailMessage);                    
                     return false;
                 }
                 int num = Buffer[FanModeIndex];
@@ -251,7 +254,7 @@ namespace WaterCoolerCLI.Api
                 }
                 fanMode = (SpeedMode)num;
                 pumMode = (SpeedMode)num2;
-                return flag;
+                return true;
             }
             catch (Exception ex)
             {
@@ -292,18 +295,17 @@ namespace WaterCoolerCLI.Api
         /// <summary>
         /// Retrieves the speed curve for the device and mode.
         /// </summary>
-        public static bool GetSpeedCurve(DeviceInfo deviceInfo, SpeedMode speedMode, ref SpeedCurve speedCurve)
+        public static bool GetSpeedCurve(DeviceInfo deviceInfo,SpeedType speedType, SpeedMode speedMode, out SpeedCurve speedCurve)
         {
+            speedCurve = new SpeedCurve(speedType);
+            
             try
             {
                 if (speedMode == SpeedMode.Customized)
                 {
-                    if (!GetSpeedCurve(deviceInfo.HidDriver, ref speedCurve))
-                    {
-                        LogUtil.Error("ucCooler.DeviceApi", "GetSpeedCurve SpeedMode.Customized fail");
-                        return false;
-                    }
-                    return true;
+                    if (GetSpeedCurve(deviceInfo.HidDriver, ref speedCurve)) return true;
+                    LogUtil.Error("ucCooler.DeviceApi", "GetSpeedCurve SpeedMode.Customized fail");
+                    return false;
                 }
                 switch (speedCurve.SpeedType)
                 {
@@ -312,11 +314,11 @@ namespace WaterCoolerCLI.Api
                             Span<int> array2 = stackalloc int[3];
                             if (deviceInfo.PID == 31309)
                             {
-                                array2 = ((!deviceInfo.ModelName.Contains("240")) ? FanApi.dcX280_360.FirstOrDefault((KeyValuePair<int, int[]> el) => el.Key == (int)speedMode).Value : FanApi.dcX240.FirstOrDefault((KeyValuePair<int, int[]> el) => el.Key == (int)speedMode).Value);
+                                array2 = (!deviceInfo.ModelName.Contains("240")) ? FanApi.dcX280_360.FirstOrDefault(el => el.Key == (int)speedMode).Value : FanApi.dcX240.FirstOrDefault(el => el.Key == (int)speedMode).Value;
                             }
                             if (deviceInfo.PID == 31326)
                             {
-                                array2 = FanApi.dcXII240_360_360I.FirstOrDefault((KeyValuePair<int, int[]> el) => el.Key == (int)speedMode).Value;
+                                array2 = FanApi.dcXII240_360_360I.FirstOrDefault(el => el.Key == (int)speedMode).Value;
                             }
                             speedCurve.TemperatureSpeeds[0].Temperature = Temp0;
                             speedCurve.TemperatureSpeeds[0].Speed = array2[0];
@@ -333,11 +335,11 @@ namespace WaterCoolerCLI.Api
                             Span<int> array = stackalloc int[3];
                             if (deviceInfo.PID == 31309)
                             {
-                                array = PumpApi.dcX240_280_360.FirstOrDefault((KeyValuePair<int, int[]> el) => el.Key == (int)speedMode).Value;
+                                array = PumpApi.dcX240_280_360.FirstOrDefault(el => el.Key == (int)speedMode).Value;
                             }
                             if (deviceInfo.PID == 31326)
                             {
-                                array = PumpApi.dcXII240_360_360I.FirstOrDefault((KeyValuePair<int, int[]> el) => el.Key == (int)speedMode).Value;
+                                array = PumpApi.dcXII240_360_360I.FirstOrDefault(el => el.Key == (int)speedMode).Value;
                             }
                             speedCurve.TemperatureSpeeds[0].Temperature = Temp0;
                             speedCurve.TemperatureSpeeds[0].Speed = array[0];
@@ -392,8 +394,11 @@ namespace WaterCoolerCLI.Api
         /// <summary>
         /// Retrieves the current RPM speeds for fan and pump.
         /// </summary>
-        public static bool GetRPMSpeed(HidDriver hidDriver, ref int nFanSpeed, ref int nPumpSpeed)
+        public static bool GetRPMSpeed(HidDriver hidDriver, out int nFanSpeed, out int nPumpSpeed)
         {
+            nFanSpeed = 0;
+            nPumpSpeed = 0;
+
             try
             {
                 ClearBuffer();
@@ -406,7 +411,7 @@ namespace WaterCoolerCLI.Api
                 }
                 nFanSpeed = Buffer[2] | (Buffer[3] << 8) | (Buffer[4] << 16);
                 nPumpSpeed = Buffer[5] | (Buffer[6] << 8) | (Buffer[7] << 16);
-                return flag;
+                return true;
             }
             catch (Exception ex)
             {

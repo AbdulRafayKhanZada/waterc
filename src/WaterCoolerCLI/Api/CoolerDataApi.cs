@@ -9,11 +9,11 @@ namespace WaterCoolerCLI.Api
         private const byte CommandPrefix = 153;
         private const byte SendCpuNameCommandCode = 225;
         private const byte SendCoolerDataCommandCode = 224;
-        private readonly static byte[] SendCpuNameCommand = [CommandPrefix, SendCpuNameCommandCode, 0];
-        private readonly static byte[] SendCoolerDataCommand = [CommandPrefix, SendCoolerDataCommandCode, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        private readonly static byte[] Buffer = new byte[256];
+        private static readonly byte[] SendCpuNameCommand = [CommandPrefix, SendCpuNameCommandCode, 0];
+        private static readonly byte[] SendCoolerDataCommand = [CommandPrefix, SendCoolerDataCommandCode, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        private static readonly byte[] Buffer = new byte[256];
 
-        public static void SendCpuName(HidDriver hidDriver, string sCpuName)
+        public static bool SendCpuName(HidDriver hidDriver, string sCpuName)
         {
             try
             {
@@ -29,15 +29,18 @@ namespace WaterCoolerCLI.Api
                 if (!CoolerApi.Send(hidDriver, Buffer))
                 {
                     LogUtil.Error("CoolerDataApi", "SendCpuName fail");
+                    return false;
                 }
             }
             catch (Exception ex)
             {
                 LogUtil.Error("CoolerDataApi", "SendCpuName fail:" + ex.Message);
+                return false;
             }
+            return true;
         }
 
-        public static void SendCoolerData(HidDriver hidDriver, CoolerData coolerData)
+        public static bool SendCoolerData(HidDriver hidDriver, CoolerData coolerData)
         {
             try
             {
@@ -56,12 +59,15 @@ namespace WaterCoolerCLI.Api
                 if (!CoolerApi.Send(hidDriver, SendCoolerDataCommand))
                 {
                     LogUtil.Error("CoolerDataApi", "SendCoolerData fail");
+                    return false;
                 }
             }
             catch (Exception ex)
             {
                 LogUtil.Error("CoolerDataApi", "SendCoolerData fail:" + ex.Message);
+                return false;
             }
+            return true;
         }
 
         private static void ClearBuffer()

@@ -1,10 +1,12 @@
 using WaterCoolerCLI.Common;
 
+namespace WaterCoolerCLI.Handlers;
+
 public static class CpuTempHandler
 {
-    const string hwmonDir = "/sys/class/hwmon";
-    const string StartInfoFileName = "/bin/sh";
-    const string StartInfoArguments = "-c \"lsmod | grep k10temp\"";
+    private const string HwmonDir = "/sys/class/hwmon";
+    private const string StartInfoFileName = "/bin/sh";
+    private const string StartInfoArguments = "-c \"lsmod | grep k10temp\"";
 
     public static bool CanReadCpuTemperature
     {
@@ -33,7 +35,7 @@ public static class CpuTempHandler
                     return false;
                 }
 
-                if (!Directory.Exists(hwmonDir))
+                if (!Directory.Exists(HwmonDir))
                 {
                     return false;
                 }
@@ -47,82 +49,90 @@ public static class CpuTempHandler
         }
     }
 
-    public static (double? PackageTempC, string PackageLabel) GetCpuTemperature()
+    public static bool GetCpuTemperature(out (double? PackageTempC, string PackageLabel)temp)
     {
-        var hwmonDirs = Directory.GetDirectories(hwmonDir, "hwmon*");
-        double? packageTempC = null;
-        string packageLabel = null;
+        temp = (null, null);
 
+        string[] hwmonDirs;
+        
         try
         {
-            foreach (var hwmonDirPath in hwmonDirs)
+            hwmonDirs = Directory.GetDirectories(HwmonDir, "hwmon*");
+        }
+        catch (Exception ex)
+        {
+            LogUtil.Error(nameof(CpuTempHandler), ex.Message);
+            return false;
+        }
+
+        foreach (var hwmonDirPath in hwmonDirs)
+        {
+            // Look for k10temp device (usually hwmon0 or similar)
+            try
             {
-                // Look for k10temp device (usually hwmon0 or similar)
-                try
-                {
-                    var nameFiles = Directory.GetFiles(hwmonDirPath, "name");
-                    if (!nameFiles.Any(f => File.ReadAllText(f).Trim() == "k10temp")) continue;
-                }
-                catch(Exception ex)
-                {
-                    LogUtil.Error(nameof(CpuTempHandler),ex.Message);
-                }
+                var nameFiles = Directory.GetFiles(hwmonDirPath, "name");
+                if (!nameFiles.Any(f => File.ReadAllText(f).Trim() == "k10temp")) continue;
+            }
+            catch(Exception ex)
+            {
+                LogUtil.Error(nameof(CpuTempHandler),ex.Message);
+                continue;
+            }
 
+            string [] tempInputFiles;
+            try
+            {
+                tempInputFiles = Directory.GetFiles(hwmonDirPath, "temp*_input");
+            }
+            catch (Exception ex)
+            {
+                LogUtil.Error(nameof(CpuTempHandler), ex.Message);
+                continue;
+            }
+
+            foreach (var inputFile in tempInputFiles)
+            {
                 try
                 {
-                    var tempInputFiles = Directory.GetFiles(hwmonDirPath, "temp*_input");
-                    foreach (var inputFile in tempInputFiles)
+                    string inputName = Path.GetFileNameWithoutExtension(inputFile);
+                    string labelFile = Path.Combine(Path.GetDirectoryName(inputFile)!, inputName.Replace("_input", "_label"));
+
+                    if (File.Exists(labelFile))
                     {
-                        try
+                        string label = File.ReadAllText(labelFile).Trim();
+                        string tempStr = File.ReadAllText(inputFile).Trim();
+
+                        if (int.TryParse(tempStr, out int tempMilli))
                         {
-                            string inputName = Path.GetFileNameWithoutExtension(inputFile);
-                            string labelFile = Path.Combine(Path.GetDirectoryName(inputFile)!, inputName.Replace("_input", "_label"));
+                            double tempC = tempMilli / 1000.0;
 
-                            if (File.Exists(labelFile))
+                            switch (label)
                             {
-                                string label = File.ReadAllText(labelFile).Trim();
-                                string tempStr = File.ReadAllText(inputFile).Trim();
-
-                                if (int.TryParse(tempStr, out int tempMilli))
-                                {
-                                    double tempC = tempMilli / 1000.0;
-
-                                    // Prioritize Tctl for package temp
-                                    if (label == "Tctl" && !packageTempC.HasValue)
-                                    {
-                                        packageTempC = tempC;
-                                        packageLabel = label;
-                                    }
-                                    // Fallback to Tdie if no Tctl
-                                    else if (label == "Tdie" && !packageTempC.HasValue)
-                                    {
-                                        packageTempC = tempC;
-                                        packageLabel = label;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                LogUtil.Error(nameof(CpuTempHandler),$"No label found {inputName} {labelFile}");
+                                // Prioritize Tctl for package temp
+                                case "Tctl":
+                                    temp.PackageTempC = tempC;
+                                    temp.PackageLabel = label;
+                                    break;
+                                // Fallback to Tdie if no Tctl
+                                case "Tdie" when temp.PackageTempC.HasValue is false:
+                                    temp.PackageTempC = tempC;
+                                    temp.PackageLabel = label;
+                                    break;
                             }
                         }
-                        catch(Exception ex)
-                        {
-                            LogUtil.Error(nameof(CpuTempHandler),ex.Message);
-                        }
+                    }
+                    else
+                    {
+                        LogUtil.Error(nameof(CpuTempHandler),$"No label found {inputName} {labelFile}");
                     }
                 }
                 catch(Exception ex)
                 {
                     LogUtil.Error(nameof(CpuTempHandler),ex.Message);
                 }
-            }
-        }
-        catch(Exception ex)
-        {
-            LogUtil.Error(nameof(CpuTempHandler),ex.Message);
+            }    
         }
 
-        return (packageTempC, packageLabel);
+        return temp.PackageTempC.HasValue;
     }
 }

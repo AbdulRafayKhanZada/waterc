@@ -15,11 +15,11 @@ namespace WaterCoolerCLI.Api
         /// <summary>
         /// Connects to the device using the provided driver and device info.
         /// </summary>
-        public static bool Connect(int nVID, int nPID, ref GDriverInfo driverInfo, ref HidDriver hidDriver)
+        public static bool Connect(uint vid, uint pid, ref GDriverInfo driverInfo, ref HidDriver hidDriver)
         {
             try
             {
-                driverInfo = new GDriverInfo((uint)nVID, (uint)nPID, (nPID == 31313) ? 65282u : 0u);
+                driverInfo = new GDriverInfo(vid, pid, (pid == 31313) ? 65282u : 0u);
                 var device = DeviceList.Local.GetHidDevices((int)driverInfo.uVID, (int)driverInfo.uPID).FirstOrDefault();
 
                 if (device is not null)

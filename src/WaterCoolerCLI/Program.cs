@@ -1,27 +1,30 @@
 ﻿using System.Text;
 using WaterCoolerCLI.Api;
 using WaterCoolerCLI.Common;
-using WaterCoolerCLI.Models;
+using WaterCoolerCLI.Handlers;
 using WaterCoolerCLI.Invoke;
+using WaterCoolerCLI.Models;
+
+namespace WaterCoolerCLI;
 
 public class Program
 {
-    private static readonly string[] AvailableCommands = {
+    private static readonly string[] AvailableCommands = [
         "help", "get-fan-mode", "set-fan-mode", "get-pump-mode", "set-pump-mode",
         "get-speeds", "get-fan-curve", "get-pump-curve", "set-fan-curve",
         "set-pump-curve", "plot-curves", "monitor", "service", "clear", "quit", "exit"
-    };
+    ];
 
     private static readonly Dictionary<string, string[]> CommandOptions = new()
     {
-        ["set-fan-mode"] = new[] { "Balanced", "Customized", "Default", "FixedRPM", "Turbo", "Performance", "Quiet", "ZeroRPM" },
-        ["set-pump-mode"] = new[] { "Balanced", "Customized", "Default", "FixedRPM", "Turbo", "Performance", "Quiet", "ZeroRPM" },
-        ["monitor"] = new[] { "2000" },
-        ["service"] = new[] { "500" }
+        ["set-fan-mode"] = ["Balanced", "Customized", "Default", "FixedRPM", "Turbo", "Performance", "Quiet", "ZeroRPM"],
+        ["set-pump-mode"] = ["Balanced", "Customized", "Default", "FixedRPM", "Turbo", "Performance", "Quiet", "ZeroRPM"],
+        ["monitor"] = ["2000"],
+        ["service"] = ["500"]
     };
 
-    private static List<string> commandHistory = new();
-    private static int historyIndex = -1;
+    private static readonly List<string> CommandHistory = [];
+    private static int _historyIndex = -1;
 
     // Constants for strings
     private const string InitializationMessage = "Device initialized. Type 'help' for commands.";
@@ -100,7 +103,7 @@ public class Program
     private const int ShortLabelLength = 3;
 
     // Constants for arrays
-    private static readonly string[] DefaultDevices = { "VID_1044&PID_7A51", "VID_1044&PID_7A4D", "VID_0414&PID_7A5E" };
+    private static readonly string[] DefaultDevices = ["VID_1044&PID_7A51", "VID_1044&PID_7A4D", "VID_0414&PID_7A5E"];
 
     public static async Task Main(string[] args)
     {
@@ -108,7 +111,7 @@ public class Program
 
         try
         {
-            if (!TryConnect(args, ref deviceInfo))
+            if (!TryConnect(ref deviceInfo))
             {
                 Console.WriteLine(FailedToConnectMessage);
                 return;
@@ -118,8 +121,7 @@ public class Program
             if (args.Length > 0)
             {
                 // Execute single command from arguments and exit
-                string[] commandArgs = args.ToArray();
-                await ExecuteCommand(deviceInfo, commandArgs, isArg: true);
+                await ExecuteCommand(deviceInfo, args, isArg: true);
             }
             else
             {
@@ -152,40 +154,35 @@ public class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine(string.Format(AnErrorOccurredMessage, ex.Message));
+            Console.WriteLine(AnErrorOccurredMessage, ex.Message);
         }
     }
 
-    /// <summary>
-    /// Attempts to connect to a device based on command line arguments.
-    /// </summary>
-    private static bool TryConnect(string[] args, ref DeviceInfo deviceInfo)
+    private static bool TryConnect(ref DeviceInfo deviceInfo)
     {
-        bool connected = false;
-        int vid = 0;
-        int pid = 0;
+        var connected = false;
 
         // Try default devices
-        foreach (string device in DefaultDevices)
+        foreach (var device in DefaultDevices)
         {
-            uint v = uint.Parse(device.AsSpan(device.IndexOf(VidPrefix) + VidPrefix.Length, VidPidHexLength), System.Globalization.NumberStyles.HexNumber);
-            uint p = uint.Parse(device.AsSpan(device.IndexOf(PidPrefix) + PidPrefix.Length, VidPidHexLength), System.Globalization.NumberStyles.HexNumber);
-            vid = (int)v;
-            pid = (int)p;
+            var vid = uint.Parse(device.AsSpan(device.IndexOf(VidPrefix) + VidPrefix.Length, VidPidHexLength),
+                System.Globalization.NumberStyles.HexNumber);
+            var pid = uint.Parse(device.AsSpan(device.IndexOf(PidPrefix) + PidPrefix.Length, VidPidHexLength),
+                System.Globalization.NumberStyles.HexNumber);
+        
             connected = ConnectDevice(vid, pid, ref deviceInfo);
-            if (connected)
-            {
-                Console.WriteLine(string.Format(DeviceConnectedMessage, deviceInfo.ModelName, vid, pid));
-                break;
-            }
-        }
-        if (!connected)
-        {
-            Console.WriteLine(NoDevicesFoundMessage);
-            return false;
+
+            if (!connected) continue;
+
+            Console.WriteLine(DeviceConnectedMessage, deviceInfo.ModelName, vid, pid);
+            break;
         }
 
-        return connected;
+        if (connected) return true;
+
+        Console.WriteLine(NoDevicesFoundMessage);
+        return false;
+
     }
 
     /// <summary>
@@ -196,7 +193,7 @@ public class Program
         if (parts.Length == 0)
             return;
 
-        string command = parts[0];
+        var command = parts[0];
 
         switch (command)
         {
@@ -212,6 +209,7 @@ public class Program
                     Console.WriteLine(UsageSetFanMode);
                     break;
                 }
+
                 PumpFanHandler.SetFanMode(device, parts[1]);
                 break;
             case "get-pump-mode":
@@ -223,6 +221,7 @@ public class Program
                     Console.WriteLine(UsageSetPumpMode);
                     break;
                 }
+
                 PumpFanHandler.SetPumpMode(device, parts[1]);
                 break;
             case "get-speeds":
@@ -240,6 +239,7 @@ public class Program
                     Console.WriteLine(UsageSetFanCurve);
                     break;
                 }
+
                 PumpFanHandler.SetFanCurve(device, parts[1]);
                 break;
             case "set-pump-curve":
@@ -248,6 +248,7 @@ public class Program
                     Console.WriteLine(UsageSetPumpCurve);
                     break;
                 }
+
                 PumpFanHandler.SetPumpCurve(device, parts[1]);
                 break;
             case "plot-curves":
@@ -266,10 +267,11 @@ public class Program
                         Console.WriteLine(InvalidIntervalMessage);
                     }
                 }
+
                 await StartMonitoring(device, monitorIntervalMs, isArg);
                 break;
             case "service":
-                int serviceIntervalMs = DefaultServiceIntervalMs; // default 500 millisenconds
+                int serviceIntervalMs = DefaultServiceIntervalMs; // default 500 milliseconds
                 if (parts.Length > 1)
                 {
                     if (int.TryParse(parts[1], out int ms) && ms > 0)
@@ -281,6 +283,7 @@ public class Program
                         Console.WriteLine(InvalidIntervalMessage);
                     }
                 }
+
                 await StartService(device, serviceIntervalMs, isArg);
                 break;
             case "clear":
@@ -333,9 +336,9 @@ public class Program
     /// <summary>
     /// Connects to a specific device and populates the device info.
     /// </summary>
-    private static bool ConnectDevice(int vid, int pid, ref DeviceInfo deviceInfo)
+    private static bool ConnectDevice(uint vid, uint pid, ref DeviceInfo deviceInfo)
     {
-        var gDriverInfo = new GDriverInfo((uint)vid, (uint)pid, (pid == SpecialPid) ? SpecialReportId : DefaultReportId);
+        var gDriverInfo = new GDriverInfo(vid, pid, (pid == SpecialPid) ? SpecialReportId : DefaultReportId);
 
         HidDriver hidDriver = null;
 
@@ -344,8 +347,7 @@ public class Program
             return false;
         }
 
-        string curDeviceModelName = string.Empty;
-        if (!DeviceApi.GetDeviceModelName((DevicePId)pid, hidDriver, ref curDeviceModelName))
+        if (!DeviceApi.GetDeviceModelName((DevicePId)pid, hidDriver, out var curDeviceModelName))
         {
             LogUtil.Error("Program", GetDeviceModelNameFailMessage);
             return false;
@@ -359,7 +361,7 @@ public class Program
         deviceInfo.DeviceType = 0;
         deviceInfo.ModelName = curDeviceModelName;
         deviceInfo.HidDriver = hidDriver;
-        deviceInfo.gDriverInfo = gDriverInfo;
+        deviceInfo.GDriverInfo = gDriverInfo;
 
         return true;
     }
@@ -369,141 +371,160 @@ public class Program
     /// </summary>
     private static string ReadLineWithTabCompletion(string[] commands)
     {
-        StringBuilder input = new StringBuilder();
-        int cursor = 0;
+        StringBuilder input = new();
+        var cursor = 0;
         while (true)
         {
             var key = Console.ReadKey(true);
-            if (key.Key == ConsoleKey.Enter)
+            switch (key.Key)
             {
-                Console.WriteLine();
-                return input.ToString();
-            }
-            else if (key.Key == ConsoleKey.Backspace)
-            {
-                if (cursor > 0)
+                case ConsoleKey.Enter:
+                    Console.WriteLine();
+                    return input.ToString();
+                case ConsoleKey.Backspace:
                 {
-                    input.Remove(cursor - 1, 1);
-                    cursor--;
-                    RedrawInput(input.ToString(), cursor);
+                    if (cursor > 0)
+                    {
+                        input.Remove(cursor - 1, 1);
+                        cursor--;
+                        RedrawInput(input.ToString(), cursor);
+                    }
+
+                    break;
                 }
-            }
-            else if (key.Key == ConsoleKey.LeftArrow)
-            {
-                if (cursor > 0)
+                case ConsoleKey.LeftArrow:
                 {
-                    cursor--;
-                    Console.CursorLeft--;
+                    if (cursor > 0)
+                    {
+                        cursor--;
+                        Console.CursorLeft--;
+                    }
+
+                    break;
                 }
-            }
-            else if (key.Key == ConsoleKey.RightArrow)
-            {
-                if (cursor < input.Length)
+                case ConsoleKey.RightArrow:
                 {
-                    cursor++;
-                    Console.CursorLeft++;
+                    if (cursor < input.Length)
+                    {
+                        cursor++;
+                        Console.CursorLeft++;
+                    }
+
+                    break;
                 }
-            }
-            else if (key.Key == ConsoleKey.UpArrow)
-            {
-                if (commandHistory.Count > 0)
+                case ConsoleKey.UpArrow:
                 {
-                    historyIndex = Math.Min(historyIndex + 1, commandHistory.Count - 1);
-                    string hist = commandHistory[commandHistory.Count - 1 - historyIndex];
+                    if (CommandHistory.Count > 0)
+                    {
+                        _historyIndex = Math.Min(_historyIndex + 1, CommandHistory.Count - 1);
+                        var hist = CommandHistory[CommandHistory.Count - 1 - _historyIndex];
+                        RedrawInput(hist, hist.Length);
+                        input = new StringBuilder(hist);
+                        cursor = hist.Length;
+                    }
+
+                    break;
+                }
+                case ConsoleKey.DownArrow when _historyIndex > 0:
+                {
+                    _historyIndex--;
+                    var hist = CommandHistory[CommandHistory.Count - 1 - _historyIndex];
                     RedrawInput(hist, hist.Length);
                     input = new StringBuilder(hist);
                     cursor = hist.Length;
+                    break;
                 }
-            }
-            else if (key.Key == ConsoleKey.DownArrow)
-            {
-                if (historyIndex > 0)
-                {
-                    historyIndex--;
-                    string hist = commandHistory[commandHistory.Count - 1 - historyIndex];
-                    RedrawInput(hist, hist.Length);
-                    input = new StringBuilder(hist);
-                    cursor = hist.Length;
-                }
-                else
-                {
-                    historyIndex = -1;
+                case ConsoleKey.DownArrow:
+                    _historyIndex = -1;
                     RedrawInput("", 0);
                     input = new StringBuilder();
                     cursor = 0;
-                }
-            }
-            else if (key.Key == ConsoleKey.Tab)
-            {
-                string prefix = input.ToString().Substring(0, cursor);
-                var parts = prefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length > 0 && CommandOptions.ContainsKey(parts[0].ToLower()))
+                    break;
+                case ConsoleKey.Tab:
                 {
-                    string cmd = parts[0].ToLower();
-                    string argPrefix = prefix.Length > parts[0].Length + 1 ? prefix.Substring(parts[0].Length + 1) : "";
-                    var opts = CommandOptions[cmd];
-                    var matches = opts.Where(o => o.StartsWith(argPrefix, StringComparison.OrdinalIgnoreCase)).ToArray();
-                    if (matches.Length == 1)
+                    var prefix = input.ToString().Substring(0, cursor);
+                    var parts = prefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length > 0 && CommandOptions.ContainsKey(parts[0].ToLower()))
                     {
-                        string completion = matches[0].Substring(argPrefix.Length);
-                        input.Insert(cursor, completion);
-                        Console.Write(completion);
-                        cursor += completion.Length;
+                        var cmd = parts[0].ToLower();
+                        var argPrefix = prefix.Length > parts[0].Length + 1 ? prefix.Substring(parts[0].Length + 1) : "";
+                        var opts = CommandOptions[cmd];
+                        var matches = opts.Where(o => o.StartsWith(argPrefix, StringComparison.OrdinalIgnoreCase)).ToArray();
+                        if (matches.Length == 1)
+                        {
+                            var completion = matches[0].Substring(argPrefix.Length);
+                            input.Insert(cursor, completion);
+                            Console.Write(completion);
+                            cursor += completion.Length;
+                        }
+                        else if (matches.Length > 1)
+                        {
+                            var common = GetCommonPrefix(matches);
+                            if (common.Length > argPrefix.Length)
+                            {
+                                var add = common.Substring(argPrefix.Length);
+                                input.Insert(cursor, add);
+                                Console.Write(add);
+                                cursor += add.Length;
+                            }
+                            else
+                            {
+                                Console.Beep();
+                            }
+                        }
                     }
-                    else if (matches.Length > 1)
+                    else
                     {
-                        string common = GetCommonPrefix(matches);
-                        if (common.Length > argPrefix.Length)
+                        // original command completion
+                        var matches = commands.Where(c => c.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToArray();
+                        switch (matches.Length)
                         {
-                            string add = common.Substring(argPrefix.Length);
-                            input.Insert(cursor, add);
-                            Console.Write(add);
-                            cursor += add.Length;
-                        }
-                        else
-                        {
-                            Console.Beep();
+                            case 1:
+                            {
+                                var completion = matches[0].Substring(prefix.Length);
+                                input.Insert(cursor, completion);
+                                Console.Write(completion);
+                                cursor += completion.Length;
+                                break;
+                            }
+                            case > 1:
+                            {
+                                string commonPrefix = GetCommonPrefix(matches);
+                                if (commonPrefix.Length > prefix.Length)
+                                {
+                                    string add = commonPrefix.Substring(prefix.Length);
+                                    input.Insert(cursor, add);
+                                    Console.Write(add);
+                                    cursor += add.Length;
+                                }
+                                else
+                                {
+                                    Console.Beep();
+                                }
+
+                                break;
+                            }
                         }
                     }
+
+                    break;
                 }
-                else
+                default:
                 {
-                    // original command completion
-                    var matches = commands.Where(c => c.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToArray();
-                    if (matches.Length == 1)
+                    if (!char.IsControl(key.KeyChar))
                     {
-                        string completion = matches[0].Substring(prefix.Length);
-                        input.Insert(cursor, completion);
-                        Console.Write(completion);
-                        cursor += completion.Length;
-                    }
-                    else if (matches.Length > 1)
-                    {
-                        string commonPrefix = GetCommonPrefix(matches);
-                        if (commonPrefix.Length > prefix.Length)
+                        input.Insert(cursor, key.KeyChar);
+                        Console.Write(key.KeyChar);
+                        cursor++;
+                        if (cursor < input.Length)
                         {
-                            string add = commonPrefix.Substring(prefix.Length);
-                            input.Insert(cursor, add);
-                            Console.Write(add);
-                            cursor += add.Length;
-                        }
-                        else
-                        {
-                            Console.Beep();
+                            string rest = input.ToString().Substring(cursor);
+                            Console.Write(rest);
+                            Console.CursorLeft -= rest.Length;
                         }
                     }
-                }
-            }
-            else if (!char.IsControl(key.KeyChar))
-            {
-                input.Insert(cursor, key.KeyChar);
-                Console.Write(key.KeyChar);
-                cursor++;
-                if (cursor < input.Length)
-                {
-                    string rest = input.ToString().Substring(cursor);
-                    Console.Write(rest);
-                    Console.CursorLeft -= rest.Length;
+
+                    break;
                 }
             }
         }
@@ -514,7 +535,7 @@ public class Program
     /// </summary>
     private static void RedrawInput(string line, int cursor)
     {
-        int promptLength = PromptLength;
+        var promptLength = PromptLength;
         Console.CursorLeft = 0;
         Console.Write(new string(' ', Console.WindowWidth - 1));
         Console.CursorLeft = 0;
@@ -528,8 +549,8 @@ public class Program
     private static string GetCommonPrefix(string[] strings)
     {
         if (strings.Length == 0) return "";
-        string prefix = strings[0];
-        for (int i = 1; i < strings.Length; i++)
+        var prefix = strings[0];
+        for (var i = 1; i < strings.Length; i++)
         {
             while (!strings[i].StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             {
@@ -537,12 +558,10 @@ public class Program
                 if (prefix == "") return "";
             }
         }
+
         return prefix;
     }
 
-    /// <summary>
-    /// Starts real-time monitoring of device metrics.
-    /// </summary>
     private static async Task StartMonitoring(DeviceInfo device, int intervalMs, bool isArg = false)
     {
         if (!isArg)
@@ -550,69 +569,67 @@ public class Program
             Console.WriteLine(MonitoringStartingMessage);
         }
 
-        using (var cts = new CancellationTokenSource())
+        using var cts = new CancellationTokenSource();
+        var token = cts.Token;
+
+        // Start monitoring task
+        var monitoringTask = Task.Run(async () =>
         {
-            var token = cts.Token;
+            var canReadCpuTemperature = CpuTempHandler.CanReadCpuTemperature;
 
-            // Start monitoring task
-            var monitoringTask = Task.Run(async () =>
+            while (!token.IsCancellationRequested)
             {
-                var canReadCpuTemperature = CpuTempHandler.CanReadCpuTemperature;
+                Console.Write(TimePrefix, DateTime.Now.ToString(TimeFormat));
 
-                while (!token.IsCancellationRequested)
+                if (canReadCpuTemperature && CpuTempHandler.GetCpuTemperature(out var temp))
                 {
-                    Console.Write(string.Format(TimePrefix, DateTime.Now.ToString(TimeFormat)));
-
-                    if (canReadCpuTemperature)
-                    {
-                        Console.Write(CpuTempFormat, CpuTempHandler.GetCpuTemperature());
-                    }
-
-                    PumpFanHandler.PrintSpeedMetrics(device);
-                    Console.WriteLine(); // Blank line for readability
-
-                    try
-                    {
-                        await Task.Delay(intervalMs, token);
-                    }
-                    catch (TaskCanceledException)
-                    {
-                        // Expected when canceled
-                        break;
-                    }
+                    Console.Write(CpuTempFormat, temp);
                 }
-            }, token);
 
-            // Monitor for user input to stop
-            while (!cts.IsCancellationRequested)
+                PumpFanHandler.PrintSpeedMetrics(device);
+                Console.WriteLine(); // Blank line for readability
+
+                try
+                {
+                    await Task.Delay(intervalMs, token);
+                }
+                catch (TaskCanceledException)
+                {
+                    // Expected when canceled
+                    break;
+                }
+            }
+        }, token).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+
+        // Monitor for user input to stop
+        while (!cts.IsCancellationRequested)
+        {
+            if (!isArg && Console.KeyAvailable)
             {
-                if (!isArg && Console.KeyAvailable)
+                var key = Console.ReadKey(intercept: true);
+                if (key.Key == ConsoleKey.Q)
                 {
-                    var key = Console.ReadKey(intercept: true);
-                    if (key.Key == ConsoleKey.Q)
-                    {
-                        cts.Cancel();
-                        break;
-                    }
+                    await cts.CancelAsync();
+                    break;
                 }
-                await Task.Delay(SleepDelayMs); // Small delay to avoid busy-waiting
             }
 
-            // Wait for monitoring task to complete
-            monitoringTask.Wait();
-            Console.WriteLine(MonitoringStoppedMessage);
+            await Task.Delay(SleepDelayMs, token).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing); // Small delay to avoid busy-waiting
         }
+
+        // Wait for monitoring task to complete
+        await monitoringTask;
+        Console.WriteLine(MonitoringStoppedMessage);
     }
 
-    /// <summary>
-    /// Starts service.
-    /// </summary>
+
     private static async Task StartService(DeviceInfo device, int intervalMs, bool isArg = false)
     {
         if (!isArg)
         {
             Console.WriteLine(ServiceStartingMessage);
         }
+
         if (!CpuTempHandler.CanReadCpuTemperature)
         {
             LogUtil.Error("Program", "Error reading CPU temperature: Unable to read the temperature sensors!");
@@ -623,54 +640,58 @@ public class Program
         //TODO get cpu name
         CoolerDataApi.SendCpuName(device.HidDriver, "AMD Ryzen 9 7950X3D");
 
-        using (var cts = new CancellationTokenSource())
+        using var cts = new CancellationTokenSource();
+        var token = cts.Token;
+
+        // Start service task
+        var serviceTask = Task.Run(async () =>
         {
-            var token = cts.Token;
+            var coolerData = new CoolerData();
 
-            // Start service task
-            var ServiceTask = Task.Run(async () =>
+            while (!token.IsCancellationRequested)
             {
-                var coolerData = new CoolerData();
-
-                while (!token.IsCancellationRequested)
+                try
                 {
-                    try
+                    if (CpuTempHandler.GetCpuTemperature(out var temp) is false)
                     {
-                        var temp = CpuTempHandler.GetCpuTemperature();
-                        if (temp.PackageTempC is null) { break; }
-                        ;
-                        coolerData.CpuTemperature = (byte)Math.Clamp(Math.Round(temp.PackageTempC.Value), 0, 255);
-
-                        CoolerDataApi.SendCoolerData(device.HidDriver, coolerData);
-                        await Task.Delay(intervalMs, token);
-                    }
-                    catch (TaskCanceledException)
-                    {
-                        // Expected when canceled
                         break;
                     }
-                }
-            }, token);
 
-            // Service for user input to stop
-            while (!cts.IsCancellationRequested)
-            {
-                if (!isArg && Console.KeyAvailable)
-                {
-                    var key = Console.ReadKey(intercept: true);
-                    if (key.Key == ConsoleKey.Q)
+                    coolerData.CpuTemperature = (byte)Math.Clamp(Math.Round(temp.PackageTempC!.Value), 0, 255);
+
+                    if (CoolerDataApi.SendCoolerData(device.HidDriver, coolerData) is false)
                     {
-                        cts.Cancel();
                         break;
                     }
+
+                    await Task.Delay(intervalMs, token).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
                 }
-                await Task.Delay(SleepDelayMs); // Small delay to avoid busy-waiting
+                catch
+                {
+                    break;
+                }
+            }
+        }, token).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+
+        // Service for user input to stop
+        while (!cts.IsCancellationRequested)
+        {
+            if (!isArg && Console.KeyAvailable)
+            {
+                var key = Console.ReadKey(intercept: true);
+                if (key.Key == ConsoleKey.Q)
+                {
+                    await cts.CancelAsync();
+                    break;
+                }
             }
 
-            // Wait for monitoring task to complete
-            ServiceTask.Wait();
-            Console.WriteLine(ServiceStoppedMessage);
+            await Task.Delay(SleepDelayMs, token).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing); // Small delay to avoid busy-waiting
         }
+
+        // Wait for monitoring task to complete
+        await serviceTask;
+        Console.WriteLine(ServiceStoppedMessage);
     }
 
     /// <summary>
@@ -678,16 +699,17 @@ public class Program
     /// </summary>
     private static void AddToCommandHistory(string command)
     {
-        if (string.IsNullOrWhiteSpace(command) || commandHistory.Contains(command))
+        if (string.IsNullOrWhiteSpace(command) || CommandHistory.Contains(command))
             return;
 
-        commandHistory.Add(command);
+        CommandHistory.Add(command);
         // Limit history size
-        if (commandHistory.Count > HistoryLimit)
+        if (CommandHistory.Count > HistoryLimit)
         {
-            commandHistory.RemoveAt(0);
+            CommandHistory.RemoveAt(0);
         }
-        historyIndex = -1; // Reset index
+
+        _historyIndex = -1; // Reset index
     }
 
     private static void PlotCurves(DeviceInfo device)
@@ -717,8 +739,8 @@ public class Program
 
         char[,] graph = new char[PlotHeight, PlotWidth];
         for (int y = 0; y < PlotHeight; y++)
-            for (int x = 0; x < PlotWidth; x++)
-                graph[y, x] = ' ';
+        for (int x = 0; x < PlotWidth; x++)
+            graph[y, x] = ' ';
 
         // Axes
         for (int y = 0; y < PlotHeight; y++) graph[y, 0] = '|';
@@ -796,6 +818,7 @@ public class Program
             int y = Math.Max(0, Math.Min(PlotHeight - 1, PlotHeight - 1 - (int)((p.speed - minSpeed) * speedScale)));
             graph[y, x] = 'O';
         }
+
         foreach (var p in pumpPoints)
         {
             int x = Math.Max(0, Math.Min(PlotWidth - 1, (int)((p.temp - minTemp) * tempScale)));
@@ -823,11 +846,13 @@ public class Program
             {
                 yLabel = $"{(int)labelSpeed,4} |"; // Right-align 4 digits + " |"
             }
+
             Console.Write(yLabel);
             for (int x = 0; x < PlotWidth; x++)
             {
                 Console.Write(graph[y, x]);
             }
+
             Console.WriteLine();
         }
 
@@ -851,6 +876,7 @@ public class Program
             if (shortLabel.Length > ShortLabelLength) shortLabel = shortLabel.Substring(0, ShortLabelLength); // Trim if needed
             xAxisBuilder.Append(shortLabel);
         }
+
         // Pad to full width
         while (xAxisBuilder.Length < PlotLabelWidth + PlotWidth)
             xAxisBuilder.Append(' ');
@@ -864,6 +890,7 @@ public class Program
         {
             Console.WriteLine($"  {p.temp,2}{DegreeCelsius}: {p.speed,4}{RPMUnit}");
         }
+
         Console.WriteLine(CurrentPumpCurvePointsTitle);
         foreach (var p in pumpPoints.OrderBy(p => p.temp))
         {

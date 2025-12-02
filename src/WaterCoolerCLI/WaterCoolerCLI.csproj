@@ -10,12 +10,12 @@
     <SelfContained>true</SelfContained>
     <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
-  
-    <ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="HidSharp" Version="2.1.0" />
   </ItemGroup>
-<ItemGroup Condition="'$(Configuration)' == 'Release'">
-  <TrimmerRootAssembly Include="HidSharp" />
-</ItemGroup>
+  
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <TrimmerRootAssembly Include="HidSharp" />
+  </ItemGroup>
 </Project>
-
